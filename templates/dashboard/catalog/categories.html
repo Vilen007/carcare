@@ -1,0 +1,39 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Categories{% endblock %}
+{% block eyebrow %}Catalog{% endblock %}
+{% block heading %}Categories{% endblock %}
+{% block content %}
+<div class="dash-toolbar">
+  <p class="text-sm text-zinc-400">Organize the shop navigation and product grouping.</p>
+  <div class="dash-toolbar-actions">
+    <a href="{% url 'dashboard:products' %}" class="btn-ghost btn-sm">Products</a>
+    <a href="{% url 'dashboard:category_new' %}" class="btn-primary btn-sm">Add category</a>
+  </div>
+</div>
+<div class="page-card">
+  <div class="dash-table-wrap">
+    <table class="dash-table">
+      <thead><tr><th>Name</th><th>Parent</th><th>Nav</th><th>Active</th><th>Sort</th><th></th></tr></thead>
+      <tbody>
+        {% for category in page_obj %}
+        <tr>
+          <td><a class="text-champagne hover:underline" href="{% url 'dashboard:category_edit' category.pk %}">{{ category.name }}</a></td>
+          <td>{{ category.parent|default:"—" }}</td>
+          <td>{{ category.show_in_navigation|yesno:"Yes,No" }}</td>
+          <td>{{ category.is_active|yesno:"Yes,No" }}</td>
+          <td>{{ category.sort_order }}</td>
+          <td class="text-right">
+            <form method="post" action="{% url 'dashboard:category_delete' category.pk %}">{% csrf_token %}
+              <button class="text-xs text-red-300 hover:underline">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="py-8 text-center text-zinc-500">No categories yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "dashboard/includes/pagination.html" with page_obj=page_obj querystring=querystring %}
+{% endblock %}

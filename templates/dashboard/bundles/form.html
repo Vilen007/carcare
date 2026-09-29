@@ -1,0 +1,17 @@
+{% extends "dashboard/base.html" %}
+{% block title %}{% if bundle %}Edit{% else %}New{% endif %} bundle{% endblock %}
+{% block eyebrow %}Bundles{% endblock %}
+{% block heading %}{% if bundle %}{{ bundle.name }}{% else %}New bundle{% endif %}{% endblock %}
+{% block content %}
+<form method="post" enctype="multipart/form-data" class="dash-form space-y-6">{% csrf_token %}
+  <section class="panel grid gap-4 p-5 md:grid-cols-2">
+    {% for field in form %}<div class="{% if field.name in 'description,eligible_categories,image' %}md:col-span-2{% endif %}"><label>{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
+  </section>
+  <section class="panel p-5">
+    <h2 class="text-2xl">Bundle items</h2>
+    {{ item_formset.management_form }}
+    <div class="mt-4 space-y-3">{% for f in item_formset %}<div class="grid gap-3 border border-line p-4 md:grid-cols-3">{{ f.id }}{% for field in f.visible_fields %}<div><label>{{ field.label }}</label>{{ field }}</div>{% endfor %}</div>{% endfor %}</div>
+  </section>
+  <div class="flex gap-3"><button class="btn-primary">Save bundle</button><a href="{% url 'dashboard:bundles' %}" class="btn-secondary">Cancel</a></div>
+</form>
+{% endblock %}

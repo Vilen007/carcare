@@ -1,0 +1,4 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title }} | Carcare{% endblock %}
+{% block meta_description %}{{ page.meta_description|default:page.title }}{% endblock %}
+{% block content %}<header class="border-b border-line"><div class="container-shell max-w-4xl py-16"><p class="eyebrow">Carcare</p><h1 class="display-title mt-4">{{ page.title }}</h1></div></header><article class="container-shell max-w-4xl py-12"><div class="prose-store text-zinc-300">{{ page.body|linebreaks }}</div><p class="mt-12 border-t border-line pt-6 text-xs text-zinc-600">Last updated {{ page.updated_at|date:"d F Y" }}</p></article>{% endblock %}

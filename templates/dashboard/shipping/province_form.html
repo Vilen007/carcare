@@ -1,0 +1,10 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Province{% endblock %}
+{% block eyebrow %}Shipping{% endblock %}
+{% block heading %}{% if province %}{{ province.name }}{% else %}New province{% endif %}{% endblock %}
+{% block content %}
+<form method="post" class="dash-form panel grid max-w-2xl gap-4 p-5 md:grid-cols-2">{% csrf_token %}
+  {% for field in form %}<div><label>{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
+  <div class="md:col-span-2 flex gap-3"><button class="btn-primary">Save</button><a href="{% url 'dashboard:shipping' %}" class="btn-secondary">Cancel</a></div>
+</form>
+{% endblock %}

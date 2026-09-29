@@ -1,0 +1,78 @@
+{% extends "dashboard/base.html" %}
+{% block title %}{% if product %}Edit{% else %}New{% endif %} product{% endblock %}
+{% block eyebrow %}Catalog{% endblock %}
+{% block heading %}{% if product %}{{ product.name }}{% else %}New product{% endif %}{% endblock %}
+{% block content %}
+<div class="dash-toolbar">
+  <div class="chip-row">
+    <a href="{% url 'dashboard:products' %}" class="chip {% if '/dashboard/products' in request.path %}is-active{% endif %}">Products</a>
+    <a href="{% url 'dashboard:categories' %}" class="chip">Categories</a>
+  </div>
+  {% if product %}
+  <div class="dash-toolbar-actions">
+    {% if product.status != 'active' %}
+    <form method="post" action="{% url 'dashboard:product_activate' product.pk %}">{% csrf_token %}
+      <button type="submit" class="btn-secondary btn-sm">Activate</button>
+    </form>
+    {% endif %}
+    {% if product.status != 'archived' %}
+    <form method="post" action="{% url 'dashboard:product_archive' product.pk %}">{% csrf_token %}
+      <button type="submit" class="btn-ghost btn-sm">Archive</button>
+    </form>
+    {% endif %}
+    <form method="post" action="{% url 'dashboard:product_delete' product.pk %}" onsubmit="return confirm('Delete this product permanently?');">{% csrf_token %}
+      <button type="submit" class="btn-ghost btn-sm text-red-300">Delete</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+
+<form method="post" enctype="multipart/form-data" class="dash-form space-y-6">{% csrf_token %}
+  <section class="panel grid gap-4 p-5 md:grid-cols-2">
+    <h2 class="md:col-span-2 text-xl">Basics</h2>
+    {% for field in form %}{% if field.name in 'category,name,slug,sku,short_description,description,usage,status,is_featured,is_new,meta_title,meta_description' %}
+    <div class="{% if field.name in 'short_description,description,usage,meta_description' %}md:col-span-2{% endif %}">
+      <label>{{ field.label }}</label>{{ field }}{{ field.errors }}
+    </div>
+    {% endif %}{% endfor %}
+  </section>
+  <section class="panel grid gap-4 p-5 md:grid-cols-3">
+    <h2 class="md:col-span-3 text-xl">Pricing &amp; stock</h2>
+    {% for field in form %}{% if field.name in 'price,compare_at_price,cost_price,stock,low_stock_threshold,track_inventory,weight_grams' %}
+    <div><label>{{ field.label }}</label>{{ field }}{{ field.errors }}</div>
+    {% endif %}{% endfor %}
+  </section>
+  <section class="panel p-5">
+    <h2 class="text-xl">Images</h2>
+    {{ image_formset.management_form }}
+    <div class="mt-4 space-y-4">
+      {% for f in image_formset %}
+      <div class="grid gap-3 border border-line p-4 md:grid-cols-4">
+        {{ f.id }}
+        {% for field in f.visible_fields %}
+        <div><label>{{ field.label }}</label>{{ field }}{% if field.errors %}<p class="text-xs text-red-300">{{ field.errors }}</p>{% endif %}</div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  <section class="panel p-5">
+    <h2 class="text-xl">Variants</h2>
+    {{ variant_formset.management_form }}
+    <div class="mt-4 space-y-4">
+      {% for f in variant_formset %}
+      <div class="grid gap-3 border border-line p-4 md:grid-cols-5">
+        {{ f.id }}
+        {% for field in f.visible_fields %}
+        <div><label>{{ field.label }}</label>{{ field }}</div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  <div class="flex flex-wrap gap-3">
+    <button type="submit" class="btn-primary">Save product</button>
+    <a href="{% url 'dashboard:products' %}" class="btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

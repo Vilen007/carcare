@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Checkout | Carcare{% endblock %}
+{% block content %}
+<div class="container-shell py-12"><p class="eyebrow">Secure checkout</p><h1 class="mt-3 text-5xl">Complete your order.</h1>
+<form method="post" class="mt-10 grid gap-10 lg:grid-cols-[1fr_400px]">{% csrf_token %}
+  <section class="panel p-6 md:p-8"><h2 class="text-3xl">Delivery details</h2>{% if form.non_field_errors %}<div class="mt-5 border border-red-900 bg-red-950/30 p-4 text-red-300">{{ form.non_field_errors }}</div>{% endif %}<div class="mt-7 grid gap-5 sm:grid-cols-2">{% for field in form %}{% if field.name != "coupon_code" %}<div class="{% if field.name == 'address_line_1' or field.name == 'address_line_2' or field.name == 'customer_note' %}sm:col-span-2{% endif %} {% if field.name == 'save_address' %}flex items-center gap-3{% endif %}">{% if field.name == 'save_address' %}{{ field }} <label for="{{ field.id_for_label }}" class="mb-0 normal-case tracking-normal">{{ field.label }}</label>{% else %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% endif %}{{ field.errors }}{% if field.help_text %}<span class="helptext">{{ field.help_text }}</span>{% endif %}</div>{% endif %}{% endfor %}</div></section>
+  <aside class="panel h-fit p-6 lg:sticky lg:top-28"><h2 class="text-3xl">Order summary</h2><div class="mt-5 space-y-4">{% for line in cart_lines %}<div class="flex justify-between gap-4 text-sm"><span class="text-zinc-400">{{ line.quantity }} × {{ line.item.name }}</span><span class="whitespace-nowrap">PKR {{ line.total|floatformat:0 }}</span></div>{% endfor %}</div><div class="mt-6 border-t border-line pt-5"><label for="{{ form.coupon_code.id_for_label }}">Coupon code</label>{{ form.coupon_code }}{{ form.coupon_code.errors }}<p class="mt-2 text-xs text-zinc-500">The discount is verified when you place the order.</p></div><dl class="mt-6 space-y-3 border-t border-line pt-5 text-sm"><div class="flex justify-between"><dt class="text-zinc-400">Subtotal</dt><dd>PKR {{ subtotal|floatformat:0 }}</dd></div>{% if estimated_discount %}<div class="flex justify-between text-emerald-300"><dt>Coupon discount</dt><dd>− PKR {{ estimated_discount|floatformat:0 }}</dd></div>{% endif %}<div class="flex justify-between"><dt class="text-zinc-400">Delivery & COD</dt><dd>Calculated by province</dd></div><div class="flex justify-between border-t border-line pt-4 text-lg font-bold"><dt>Estimated total</dt><dd>PKR {{ estimated_total|floatformat:0 }}</dd></div></dl><div class="mt-6 border border-champagne/20 bg-champagne/5 p-4 text-xs leading-5 text-zinc-400"><strong class="block text-champagne">Cash on delivery</strong>Pay the courier when your order arrives.</div><button class="btn-primary mt-6 w-full">Place order</button></aside>
+</form></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  (() => {
+    const province = document.querySelector("#id_delivery_province");
+    const city = document.querySelector("#id_delivery_city");
+    if (!province || !city) return;
+    province.addEventListener("change", async () => {
+      city.disabled = true;
+      city.replaceChildren(new Option("Loading cities…", ""));
+      if (!province.value) {
+        city.replaceChildren(new Option("Select city", ""));
+        city.disabled = false;
+        return;
+      }
+      const response = await fetch("{% url 'orders:cities' %}?province=" + encodeURIComponent(province.value));
+      const data = await response.json();
+      city.replaceChildren(new Option("Select city", ""));
+      data.cities.forEach(item => city.add(new Option(item.name, item.id)));
+      city.disabled = false;
+    });
+  })();
+</script>
+{% endblock %}

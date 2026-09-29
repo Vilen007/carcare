@@ -1,0 +1,27 @@
+<article class="group product-card">
+  <a href="{{ product.get_absolute_url }}" class="block" aria-label="View {{ product.name }}">
+    <div class="product-media">
+      {% if product.primary_image %}
+        <img src="{{ product.primary_image.image.url }}" alt="{{ product.primary_image.alt_text|default:product.name }}" loading="lazy">
+      {% else %}
+        <div class="flex h-full items-center justify-center bg-[radial-gradient(circle_at_50%_30%,#293039,#111519_70%)]">
+          <span class="font-display text-5xl text-zinc-700" aria-hidden="true">CC</span><span class="sr-only">No image available</span>
+        </div>
+      {% endif %}
+      {% if product.discount_percent %}<span class="badge">Save {{ product.discount_percent }}%</span>{% elif product.is_new %}<span class="badge">New</span>{% endif %}
+      {% if not product.in_stock %}<span class="absolute inset-x-0 bottom-0 bg-black/80 py-2 text-center text-[10px] font-bold uppercase tracking-widest">Out of stock</span>
+      {% elif product.track_inventory and product.stock <= product.low_stock_threshold %}<span class="absolute inset-x-0 bottom-0 bg-black/70 py-2 text-center text-[10px] font-bold uppercase tracking-widest text-amber-200">Only {{ product.stock }} left</span>{% endif %}
+    </div>
+    <div class="p-5">
+      <p class="text-[10px] font-bold uppercase tracking-[.2em] text-champagne">{{ product.category.name }}</p>
+      <h3 class="mt-2 min-h-12 text-xl leading-tight">{{ product.name }}</h3>
+      {% if product.avg_rating %}<p class="mt-2 text-xs text-champagne" aria-label="{{ product.avg_rating|floatformat:1 }} out of 5 stars">★ <strong>{{ product.avg_rating|floatformat:1 }}</strong> <span class="text-zinc-500">({{ product.review_count }})</span></p>{% else %}<p class="mt-2 text-xs text-zinc-600">No reviews yet</p>{% endif %}
+      <div class="mt-4 flex items-baseline gap-2">
+        <span class="price">PKR {{ product.current_price|floatformat:0 }}</span>
+        {% if product.display_compare_price %}<del class="text-xs text-zinc-500">PKR {{ product.display_compare_price|floatformat:0 }}</del>{% endif %}
+      </div>
+      {% if product.track_inventory and product.in_stock %}<p class="mt-2 text-[11px] text-zinc-500">{{ product.stock }} available</p>{% endif %}
+    </div>
+  </a>
+  <button type="button" data-quick-view="{% url 'catalog:quick_view' product.id %}" class="absolute right-3 top-3 z-20 hidden border border-white/20 bg-black/80 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-white backdrop-blur hover:border-champagne hover:text-champagne md:block">Quick view</button>
+</article>

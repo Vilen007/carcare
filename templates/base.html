@@ -1,0 +1,95 @@
+{% load static %}
+<!doctype html>
+<html lang="en" class="bg-ink">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="{% block meta_description %}Premium car-care products, delivered across Pakistan.{% endblock %}">
+  <title>{% block title %}{{ site_settings.store_name|default:"Carcare" }}{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'dist/app.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen selection:bg-champagne selection:text-black">
+  <a href="#main" class="fixed left-3 top-3 z-[60] -translate-y-20 bg-champagne px-4 py-2 font-bold text-black focus:translate-y-0">Skip to content</a>
+  <div class="bg-champagne px-4 py-2 text-center text-[10px] font-black uppercase tracking-[.22em] text-black">
+    {% if active_sale %}{{ active_sale.banner_text|default:active_sale.name }} · {{ active_sale.discount_percent }}% off{% else %}{{ site_settings.announcement|default:"Premium detailing essentials · Delivered across Pakistan" }}{% endif %}
+  </div>
+  <header class="sticky top-0 z-50 border-b border-line bg-ink/95 backdrop-blur no-print">
+    <div class="container-shell flex h-20 items-center justify-between gap-5">
+      <a href="{% url 'core:home' %}" class="flex items-center gap-3 font-display text-3xl font-bold tracking-tight text-white" aria-label="Carcare home">
+        <img src="{% static 'img/logo.webp' %}" alt="" class="h-12 w-12 rounded-full object-cover">
+        <span>CAR<span class="text-champagne">CARE</span></span>
+      </a>
+      <nav class="hidden items-center gap-7 lg:flex" aria-label="Primary navigation">
+        <a href="{% url 'catalog:list' %}" class="text-xs font-bold uppercase tracking-[.16em] hover:text-champagne">Shop</a>
+        {% for nav_category in nav_categories %}
+          <a href="{{ nav_category.get_absolute_url }}" class="text-xs font-bold uppercase tracking-[.16em] text-zinc-300 hover:text-champagne">{{ nav_category.name }}</a>
+        {% endfor %}
+        <a href="{% url 'catalog:bundles' %}" class="text-xs font-bold uppercase tracking-[.16em] hover:text-champagne">Bundles</a>
+      </nav>
+      <div class="flex items-center gap-2">
+        <button type="button" data-search-toggle class="p-3 text-zinc-300 hover:text-champagne" aria-controls="site-search" aria-expanded="false"><span class="sr-only">Open search</span>⌕</button>
+        <a href="{% url 'customers:account' %}" class="hidden p-3 text-xs font-bold uppercase tracking-widest hover:text-champagne sm:block">{% if user.is_authenticated %}Account{% else %}Sign in{% endif %}</a>
+        <a href="{% url 'cart:detail' %}" class="relative p-3 text-xs font-bold uppercase tracking-widest hover:text-champagne">Cart <span class="ml-1 rounded-full bg-champagne px-2 py-1 text-[10px] text-black">{{ cart_count }}</span></a>
+        <button type="button" data-menu-toggle class="p-3 text-xl lg:hidden" aria-controls="mobile-menu" aria-expanded="false"><span class="sr-only">Toggle menu</span>☰</button>
+      </div>
+    </div>
+    <div id="site-search" class="hidden border-t border-line bg-panel">
+      <form action="{% url 'catalog:list' %}" method="get" class="container-shell flex gap-3 py-4" role="search">
+        <label for="site-search-input" class="sr-only">Search products</label>
+        <div class="relative flex-1">
+          <input id="site-search-input" data-suggest-url="{% url 'catalog:search_suggestions' %}" name="q" value="{{ request.GET.q }}" type="search" placeholder="Search products or SKU…" autocomplete="off">
+          <div id="search-suggestions" class="absolute inset-x-0 top-full z-50 hidden border border-line bg-panel shadow-2xl"></div>
+        </div>
+        <button class="btn-primary" type="submit">Search</button>
+      </form>
+    </div>
+    <nav id="mobile-menu" class="hidden border-t border-line bg-panel px-5 py-6 lg:hidden" aria-label="Mobile navigation">
+      <div class="grid gap-1">
+        <a href="{% url 'catalog:list' %}" class="border-b border-line py-3 font-bold">Shop all</a>
+        {% for nav_category in nav_categories %}<a href="{{ nav_category.get_absolute_url }}" class="border-b border-line py-3 text-zinc-300">{{ nav_category.name }}</a>{% endfor %}
+        <a href="{% url 'catalog:bundles' %}" class="border-b border-line py-3">Bundles</a>
+        <a href="{% url 'orders:track' %}" class="border-b border-line py-3">Track order</a>
+        <a href="{% url 'customers:account' %}" class="py-3">My account</a>
+      </div>
+    </nav>
+  </header>
+  {% if messages %}
+    <div class="fixed right-5 top-28 z-[70] w-[min(420px,calc(100%-2.5rem))] space-y-3" aria-live="polite">
+      {% for message in messages %}
+      <div data-alert role="{% if message.tags == 'error' %}alert{% else %}status{% endif %}" class="flex items-start gap-3 border bg-panel px-4 py-4 text-sm shadow-2xl transition duration-200 {% if message.tags == 'error' %}border-red-800 text-red-200{% elif message.tags == 'success' %}border-emerald-700 text-emerald-100{% else %}border-champagne/50 text-zinc-100{% endif %}">
+        <span class="mt-0.5 text-base" aria-hidden="true">{% if message.tags == 'error' %}!{% elif message.tags == 'success' %}✓{% else %}i{% endif %}</span>
+        <p class="flex-1 leading-6">{{ message }}</p>
+        <button type="button" data-alert-close class="px-1 text-lg leading-none text-zinc-500 hover:text-white" aria-label="Dismiss notification">×</button>
+      </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+  <main id="main">{% block content %}{% endblock %}</main>
+  <footer class="mt-24 border-t border-line bg-[#0b0e11] no-print">
+    <div class="container-shell grid gap-12 py-16 lg:grid-cols-2">
+      <div><p class="eyebrow">Stay in the fast lane</p><h2 class="mt-3 text-4xl">Care tips & private offers.</h2><p class="mt-4 max-w-lg text-sm leading-6 text-zinc-400">Join Pakistan's community of owners who refuse to settle for an ordinary finish.</p></div>
+      <form action="{% url 'content:newsletter' %}" method="post" class="flex items-end gap-3">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><div class="flex-1"><label for="newsletter-email">Email address</label><input id="newsletter-email" type="email" name="email" required placeholder="you@example.com"></div><button class="btn-primary" type="submit">Join</button></form>
+    </div>
+    <div class="container-shell grid gap-10 border-t border-line py-12 sm:grid-cols-2 lg:grid-cols-4">
+      <div><p class="font-display text-2xl font-bold">CAR<span class="text-champagne">CARE</span></p><p class="mt-4 text-sm leading-6 text-zinc-500">{{ site_settings.address|default:"Premium automotive care, sourced for Pakistan." }}</p></div>
+      <div><h3 class="text-sm font-bold uppercase tracking-widest">Explore</h3><div class="mt-4 grid gap-3 text-sm text-zinc-400"><a href="{% url 'catalog:list' %}">Products</a><a href="{% url 'catalog:bundles' %}">Bundles</a><a href="{% url 'orders:track' %}">Track an order</a></div></div>
+      <div><h3 class="text-sm font-bold uppercase tracking-widest">Company</h3><div class="mt-4 grid gap-3 text-sm text-zinc-400"><a href="{% url 'content:contact' %}">Contact</a><a href="{% url 'customers:account' %}">My account</a></div></div>
+      <div><h3 class="text-sm font-bold uppercase tracking-widest">Support</h3><div class="mt-4 grid gap-3 text-sm text-zinc-400">{% if site_settings.support_email %}<a href="mailto:{{ site_settings.support_email }}">{{ site_settings.support_email }}</a>{% endif %}{% if site_settings.support_phone %}<a href="tel:{{ site_settings.support_phone }}">{{ site_settings.support_phone }}</a>{% endif %}<span>Cash on delivery</span></div></div>
+    </div>
+    <div class="border-t border-line py-5 text-center text-xs text-zinc-600">© {% now "Y" %} {{ site_settings.store_name|default:"Carcare" }}. Built for better drives.</div>
+  </footer>
+  <dialog id="quick-view-modal" class="m-auto w-[min(900px,92vw)] border border-line bg-panel p-0 text-white backdrop:bg-black/80">
+    <button type="button" data-modal-close class="absolute right-4 top-4 z-10 h-10 w-10 rounded-full bg-black/70 text-xl" aria-label="Close quick view">×</button>
+    <div data-modal-content class="p-6"><p class="text-zinc-400">Loading…</p></div>
+  </dialog>
+  <script>
+    (()=>{const endpoint="{% url 'core:csrf_token' %}";async function refresh(){const response=await fetch(endpoint,{credentials:"same-origin",cache:"no-store"});if(!response.ok)throw new Error("Unable to refresh security token");const {token}=await response.json();document.querySelectorAll('input[name="csrfmiddlewaretoken"]').forEach(input=>input.value=token);return token}window.carcareCsrf={refresh};window.addEventListener("pageshow",()=>refresh().catch(()=>{}));document.addEventListener("submit",async event=>{const form=event.target;if(!(form instanceof HTMLFormElement)||form.method.toLowerCase()!=="post"||form.hasAttribute("data-ajax-form")||form.dataset.csrfReady||form.dataset.csrfPending)return;event.preventDefault();form.dataset.csrfPending="true";try{await refresh()}catch{}form.dataset.csrfReady="true";HTMLFormElement.prototype.submit.call(form)})})();
+    (()=>{document.querySelectorAll("[data-alert]").forEach((alert,index)=>{const close=()=>{alert.classList.add("opacity-0","translate-x-3");setTimeout(()=>alert.remove(),250)};alert.querySelector("[data-alert-close]")?.addEventListener("click",close);setTimeout(close,5500+index*400)})})();
+    (()=>{const bind=(button,target)=>button?.addEventListener('click',()=>{const box=document.querySelector(target),open=!box.classList.toggle('hidden');button.setAttribute('aria-expanded',String(open));if(open)box.querySelector('input')?.focus()});bind(document.querySelector('[data-menu-toggle]'),'#mobile-menu');bind(document.querySelector('[data-search-toggle]'),'#site-search');})();
+    (()=>{const input=document.querySelector('#site-search-input'),box=document.querySelector('#search-suggestions'),safe=value=>{const el=document.createElement('span');el.textContent=value;return el.innerHTML};let timer;if(!input)return;input.addEventListener('input',()=>{clearTimeout(timer);const q=input.value.trim();if(q.length<2){box.classList.add('hidden');return}timer=setTimeout(async()=>{const response=await fetch(`${input.dataset.suggestUrl}?q=${encodeURIComponent(q)}`);const data=await response.json();box.innerHTML=data.results.map(item=>`<a class="flex justify-between border-b border-line px-4 py-3 text-sm hover:bg-white/5" href="${item.url}"><span>${safe(item.name)}</span><span class="text-champagne">PKR ${Number(item.price).toLocaleString()}</span></a>`).join('');box.classList.toggle('hidden',!data.results.length)},180)});})();
+    (()=>{const modal=document.querySelector('#quick-view-modal'),content=modal?.querySelector('[data-modal-content]');document.addEventListener('click',async event=>{const button=event.target.closest('[data-quick-view]');if(!button)return;content.innerHTML='<p class="p-8 text-zinc-400">Loading…</p>';modal.showModal();const response=await fetch(button.dataset.quickView);content.innerHTML=await response.text()});modal?.querySelector('[data-modal-close]')?.addEventListener('click',()=>modal.close());modal?.addEventListener('click',event=>{if(event.target===modal)modal.close()})})();
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

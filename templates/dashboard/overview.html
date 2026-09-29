@@ -1,0 +1,71 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Overview{% endblock %}
+{% block eyebrow %}Today{% endblock %}
+{% block heading %}Operations overview{% endblock %}
+{% block content %}
+<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+  <a href="{% url 'dashboard:orders' %}?status=pending" class="panel p-5 transition hover:border-champagne">
+    <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Pending orders</p>
+    <p class="mt-3 font-display text-4xl text-champagne">{{ pending_orders }}</p>
+  </a>
+  <a href="{% url 'dashboard:inventory' %}" class="panel p-5 transition hover:border-champagne">
+    <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Low stock</p>
+    <p class="mt-3 font-display text-4xl">{{ low_stock_count }}</p>
+  </a>
+  <a href="{% url 'dashboard:reviews' %}?queue=pending" class="panel p-5 transition hover:border-champagne">
+    <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Reviews to approve</p>
+    <p class="mt-3 font-display text-4xl">{{ pending_reviews }}</p>
+  </a>
+  <a href="{% url 'dashboard:inbox' %}?queue=open" class="panel p-5 transition hover:border-champagne">
+    <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Open messages</p>
+    <p class="mt-3 font-display text-4xl">{{ unresolved_contacts }}</p>
+  </a>
+</div>
+<div class="mt-8 grid gap-6 xl:grid-cols-2">
+  <section class="page-card overflow-hidden">
+    <div class="toolbar-bar">
+      <h2 class="text-xl">Recent orders</h2>
+      <a href="{% url 'dashboard:orders' %}" class="text-xs font-bold uppercase tracking-widest text-champagne">View all</a>
+    </div>
+    <div class="dash-table-wrap dash-table-wrap--sm">
+      <table class="dash-table">
+        <thead><tr><th>Order</th><th>Customer</th><th>Status</th><th>Total</th></tr></thead>
+        <tbody>
+          {% for order in recent_orders %}
+          <tr>
+            <td><a class="text-champagne hover:underline" href="{% url 'dashboard:order_detail' order.number %}">{{ order.number }}</a></td>
+            <td>{{ order.full_name }}</td>
+            <td><span class="status-pill is-{{ order.status }}">{{ order.get_status_display }}</span></td>
+            <td class="tabular-nums">PKR {{ order.total|floatformat:0 }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="py-8 text-center text-zinc-500">No orders yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <section class="page-card overflow-hidden">
+    <div class="toolbar-bar">
+      <h2 class="text-xl">Low stock</h2>
+      <a href="{% url 'dashboard:inventory' %}" class="text-xs font-bold uppercase tracking-widest text-champagne">Manage</a>
+    </div>
+    <div class="dash-table-wrap dash-table-wrap--sm">
+      <table class="dash-table">
+        <thead><tr><th>SKU</th><th>Product</th><th>Stock</th></tr></thead>
+        <tbody>
+          {% for product in low_stock_products %}
+          <tr>
+            <td class="text-zinc-400">{{ product.sku }}</td>
+            <td><a class="text-champagne hover:underline" href="{% url 'dashboard:product_edit' product.pk %}">{{ product.name }}</a></td>
+            <td class="text-red-300 tabular-nums">{{ product.stock }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" class="py-8 text-center text-zinc-500">Inventory looks healthy.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

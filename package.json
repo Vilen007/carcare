@@ -1,0 +1,12 @@
+{
+  "name": "carcare-storefront",
+  "private": true,
+  "scripts": {
+    "css:build": "tailwindcss -i ./frontend/app.css -o ./static/dist/app.css --minify",
+    "css:watch": "tailwindcss -i ./frontend/app.css -o ./static/dist/app.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.13",
+    "tailwindcss": "^4.1.13"
+  }
+}

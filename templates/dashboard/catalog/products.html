@@ -1,0 +1,59 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Products{% endblock %}
+{% block eyebrow %}Catalog{% endblock %}
+{% block heading %}Products{% endblock %}
+{% block content %}
+<div class="dash-toolbar">
+  <form method="get" class="dash-toolbar-filters">
+    <input type="search" name="q" value="{{ query }}" placeholder="Search name or SKU">
+    <select name="status">
+      <option value="">All statuses</option>
+      {% for value,label in status_choices %}
+      <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn-secondary btn-sm">Filter</button>
+  </form>
+  <div class="dash-toolbar-actions">
+    <a href="{% url 'dashboard:categories' %}" class="btn-ghost btn-sm">Categories</a>
+    <a href="{% url 'dashboard:product_new' %}" class="btn-primary btn-sm">Add product</a>
+  </div>
+</div>
+
+<div class="page-card">
+  <div class="dash-table-wrap">
+    <table class="dash-table">
+      <thead>
+        <tr><th>Product</th><th>SKU</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for product in page_obj %}
+        <tr>
+          <td>
+            <a class="text-champagne hover:underline" href="{% url 'dashboard:product_edit' product.pk %}">{{ product.name }}</a>
+            {% if product.is_featured %}<span class="ml-2 text-[10px] uppercase tracking-widest text-champagne">Featured</span>{% endif %}
+          </td>
+          <td class="text-zinc-400">{{ product.sku }}</td>
+          <td>{{ product.category.name }}</td>
+          <td class="tabular-nums">PKR {{ product.price|floatformat:0 }}</td>
+          <td class="tabular-nums {% if product.track_inventory and product.stock <= product.low_stock_threshold %}text-red-300{% endif %}">{{ product.stock }}</td>
+          <td><span class="status-pill">{{ product.get_status_display }}</span></td>
+          <td class="text-right whitespace-nowrap">
+            <a class="text-xs text-champagne hover:underline" href="{% url 'dashboard:product_edit' product.pk %}">Edit</a>
+            {% if product.status != 'active' %}
+            <span class="text-zinc-600"> · </span>
+            <form method="post" action="{% url 'dashboard:product_activate' product.pk %}" class="inline">{% csrf_token %}
+              <button class="text-xs text-zinc-400 hover:text-champagne">Activate</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="py-10 text-center text-zinc-500">No products yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "dashboard/includes/pagination.html" with page_obj=page_obj querystring=querystring %}
+{% endblock %}

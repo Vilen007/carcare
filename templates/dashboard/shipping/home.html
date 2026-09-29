@@ -1,0 +1,70 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Shipping{% endblock %}
+{% block eyebrow %}Delivery{% endblock %}
+{% block heading %}Shipping zones{% endblock %}
+{% block content %}
+<div class="dash-toolbar">
+  <p class="text-sm text-zinc-400">Province fees drive checkout COD and free-shipping thresholds.</p>
+  <div class="dash-toolbar-actions">
+    <a href="{% url 'dashboard:province_new' %}" class="btn-primary btn-sm">Add province</a>
+    <a href="{% url 'dashboard:city_new' %}" class="btn-secondary btn-sm">Add city</a>
+  </div>
+</div>
+<div class="grid gap-6 xl:grid-cols-2">
+  <section class="page-card overflow-hidden">
+    <div class="border-b border-line px-5 py-4"><h2 class="text-xl">Provinces</h2></div>
+    <div class="dash-table-wrap">
+      <table class="dash-table">
+        <thead><tr><th>Name</th><th>Fee</th><th>COD</th><th>Free above</th><th>Active</th><th></th></tr></thead>
+        <tbody>
+          {% for province in provinces %}
+          <tr>
+            <td>
+              <a class="text-champagne hover:underline" href="{% url 'dashboard:province_edit' province.pk %}">{{ province.name }}</a>
+              <div class="text-xs text-zinc-500">{{ province.cities.count }} cities</div>
+            </td>
+            <td class="tabular-nums">{{ province.shipping_fee }}</td>
+            <td class="tabular-nums">{{ province.cod_fee }}</td>
+            <td class="tabular-nums">{{ province.free_shipping_threshold|default:"—" }}</td>
+            <td>{{ province.is_active|yesno:"Yes,No" }}</td>
+            <td class="text-right">
+              <form method="post" action="{% url 'dashboard:province_delete' province.pk %}">{% csrf_token %}
+                <button class="text-xs text-red-300 hover:underline">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="py-8 text-center text-zinc-500">No provinces.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "dashboard/includes/pagination.html" with page_obj=provinces page_param="prov_page" querystring="" %}
+  </section>
+  <section class="page-card overflow-hidden">
+    <div class="border-b border-line px-5 py-4"><h2 class="text-xl">Cities</h2></div>
+    <div class="dash-table-wrap">
+      <table class="dash-table">
+        <thead><tr><th>City</th><th>Province</th><th>Active</th><th></th></tr></thead>
+        <tbody>
+          {% for city in cities %}
+          <tr>
+            <td><a class="text-champagne hover:underline" href="{% url 'dashboard:city_edit' city.pk %}">{{ city.name }}</a></td>
+            <td>{{ city.province.name }}</td>
+            <td>{{ city.is_active|yesno:"Yes,No" }}</td>
+            <td class="text-right">
+              <form method="post" action="{% url 'dashboard:city_delete' city.pk %}">{% csrf_token %}
+                <button class="text-xs text-red-300 hover:underline">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="py-8 text-center text-zinc-500">No cities.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "dashboard/includes/pagination.html" with page_obj=cities page_param="city_page" querystring="" %}
+  </section>
+</div>
+{% endblock %}

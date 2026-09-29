@@ -1,0 +1,127 @@
+{% extends "dashboard/base.html" %}
+{% block title %}{{ order.number }}{% endblock %}
+{% block eyebrow %}Order detail{% endblock %}
+{% block heading %}{{ order.number }}{% endblock %}
+{% block content %}
+
+<div class="dash-toolbar">
+  <div class="dash-toolbar-filters">
+    <span class="status-pill is-{{ order.status }}">{{ order.get_status_display }}</span>
+    <span class="text-sm text-zinc-500">{{ order.created_at|date:"d M Y H:i" }}</span>
+  </div>
+  <div class="dash-toolbar-actions">
+    <a class="btn-secondary btn-sm" href="{% url 'orders:invoice' order.number %}" target="_blank">Invoice</a>
+    <a class="btn-secondary btn-sm" href="{% url 'orders:packing_slip' order.number %}" target="_blank">Packing slip</a>
+    <a class="btn-ghost btn-sm" href="{% url 'dashboard:orders' %}">Back</a>
+  </div>
+</div>
+
+<section class="page-card mb-6 p-4 md:p-5">
+  <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+    <h2 class="text-lg">Status pipeline</h2>
+    <p class="text-xs text-zinc-500">Click a step to move the order (emails the customer).</p>
+  </div>
+  <form method="post" action="{% url 'dashboard:order_status' order.number %}" class="stepper">{% csrf_token %}
+    <input type="hidden" name="admin_note" value="{{ order.admin_note }}">
+    <input type="hidden" name="payment_status" value="{{ order.payment_status }}">
+    {% for value, label in pipeline %}
+    <button
+      type="submit"
+      name="status"
+      value="{{ value }}"
+      class="stepper-step {% if order.status == value %}is-current{% elif value in reached %}is-done{% endif %}"
+      {% if order.status == value %}disabled{% endif %}
+    >{{ label }}</button>
+    {% endfor %}
+  </form>
+</section>
+
+<div class="grid gap-6 xl:grid-cols-[1.15fr_.85fr]">
+  <div class="space-y-6">
+    <section class="panel p-5">
+      <h2 class="text-2xl">Customer</h2>
+      <div class="mt-4 grid gap-4 text-sm sm:grid-cols-2">
+        <p><span class="text-zinc-500">Name</span><br>{{ order.full_name }}</p>
+        <p><span class="text-zinc-500">Phone</span><br><a class="text-champagne" href="tel:{{ order.phone }}">{{ order.phone }}</a></p>
+        <p><span class="text-zinc-500">Email</span><br><a class="text-champagne" href="mailto:{{ order.email }}">{{ order.email }}</a></p>
+        <p><span class="text-zinc-500">Payment</span><br>{{ order.payment_method|upper }} · {{ order.payment_status }}</p>
+        <p class="sm:col-span-2"><span class="text-zinc-500">Address</span><br>{{ order.address_line_1 }}{% if order.address_line_2 %}, {{ order.address_line_2 }}{% endif %}<br>{{ order.city }}, {{ order.province }} {{ order.postal_code }}</p>
+        {% if order.customer_note %}<p class="sm:col-span-2"><span class="text-zinc-500">Customer note</span><br>{{ order.customer_note }}</p>{% endif %}
+      </div>
+    </section>
+
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-5 py-4"><h2 class="text-2xl">Line items</h2></div>
+      <div class="dash-table-wrap dash-table-wrap--sm">
+        <table class="dash-table">
+          <thead><tr><th>Item</th><th>SKU</th><th>Qty</th><th>Total</th></tr></thead>
+          <tbody>
+            {% for item in order.items.all %}
+            <tr>
+              <td>{{ item.product_name }}</td>
+              <td class="text-zinc-400">{{ item.sku }}</td>
+              <td>{{ item.quantity }}</td>
+              <td class="tabular-nums">PKR {{ item.line_total|floatformat:0 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <dl class="space-y-2 border-t border-line px-5 py-4 text-sm">
+        <div class="flex justify-between"><dt class="text-zinc-500">Subtotal</dt><dd class="tabular-nums">PKR {{ order.subtotal|floatformat:0 }}</dd></div>
+        {% if order.discount %}<div class="flex justify-between"><dt class="text-zinc-500">Discount{% if order.coupon_code %} ({{ order.coupon_code }}){% endif %}</dt><dd class="tabular-nums">− PKR {{ order.discount|floatformat:0 }}</dd></div>{% endif %}
+        <div class="flex justify-between"><dt class="text-zinc-500">Shipping</dt><dd class="tabular-nums">PKR {{ order.shipping_fee|floatformat:0 }}</dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-500">COD fee</dt><dd class="tabular-nums">PKR {{ order.cod_fee|floatformat:0 }}</dd></div>
+        <div class="flex justify-between text-lg font-bold"><dt>Total</dt><dd class="tabular-nums">PKR {{ order.total|floatformat:0 }}</dd></div>
+      </dl>
+    </section>
+
+    <section class="panel p-5">
+      <h2 class="text-2xl">Tracking timeline</h2>
+      <ol class="mt-4 space-y-4">
+        {% for event in order.tracking_events.all %}
+        <li class="border-l border-champagne pl-4">
+          <p class="text-[10px] uppercase tracking-widest text-zinc-500">{{ event.occurred_at|date:"d M Y H:i" }}</p>
+          <p class="font-bold">{{ event.title }}</p>
+          {% if event.description %}<p class="text-sm text-zinc-400">{{ event.description }}</p>{% endif %}
+        </li>
+        {% empty %}
+        <li class="text-zinc-500">No events yet.</li>
+        {% endfor %}
+      </ol>
+      <form method="post" action="{% url 'dashboard:order_tracking' order.number %}" class="dash-form mt-6 grid gap-3 border-t border-line pt-5 sm:grid-cols-2">{% csrf_token %}
+        {% for field in tracking_form %}
+        <div class="{% if field.name == 'description' %}sm:col-span-2{% endif %}">
+          <label>{{ field.label }}</label>{{ field }}
+        </div>
+        {% endfor %}
+        <button class="btn-secondary btn-sm sm:col-span-2">Add tracking event</button>
+      </form>
+    </section>
+  </div>
+
+  <div class="space-y-6">
+    <section class="panel p-5">
+      <h2 class="text-2xl">Notes & payment</h2>
+      <form method="post" action="{% url 'dashboard:order_status' order.number %}" class="dash-form mt-5 space-y-4">{% csrf_token %}
+        <input type="hidden" name="status" value="{{ order.status }}">
+        {% for field in status_form %}
+          {% if field.name != 'status' %}
+          <div><label>{{ field.label }}</label>{{ field }}{{ field.errors }}</div>
+          {% endif %}
+        {% endfor %}
+        <button class="btn-secondary btn-sm w-full">Save note / payment</button>
+      </form>
+    </section>
+    <section class="panel p-5">
+      <h2 class="text-2xl">Shipment</h2>
+      <form method="post" action="{% url 'dashboard:order_shipment' order.number %}" class="dash-form mt-5 space-y-4">{% csrf_token %}
+        {% for field in shipment_form %}
+        <div><label>{{ field.label }}</label>{{ field }}{{ field.errors }}</div>
+        {% endfor %}
+        <button class="btn-secondary btn-sm w-full">Save shipment</button>
+      </form>
+    </section>
+  </div>
+</div>
+{% endblock %}

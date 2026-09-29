@@ -1,0 +1,29 @@
+{% extends "dashboard/base.html" %}
+{% block title %}{% if category %}Edit{% else %}New{% endif %} category{% endblock %}
+{% block eyebrow %}Catalog{% endblock %}
+{% block heading %}{% if category %}{{ category.name }}{% else %}New category{% endif %}{% endblock %}
+{% block content %}
+<div class="dash-toolbar">
+  <div class="chip-row">
+    <a href="{% url 'dashboard:products' %}" class="chip">Products</a>
+    <a href="{% url 'dashboard:categories' %}" class="chip is-active">Categories</a>
+  </div>
+  {% if category %}
+  <form method="post" action="{% url 'dashboard:category_delete' category.pk %}" onsubmit="return confirm('Delete this category? Products must be moved first.');">{% csrf_token %}
+    <button type="submit" class="btn-ghost btn-sm text-red-300">Delete category</button>
+  </form>
+  {% endif %}
+</div>
+
+<form method="post" enctype="multipart/form-data" class="dash-form panel grid max-w-3xl gap-4 p-5 md:grid-cols-2">{% csrf_token %}
+  {% for field in form %}
+  <div class="{% if field.name in 'description,image,meta_description' %}md:col-span-2{% endif %}">
+    <label>{{ field.label }}</label>{{ field }}{{ field.errors }}
+  </div>
+  {% endfor %}
+  <div class="md:col-span-2 flex flex-wrap gap-3">
+    <button type="submit" class="btn-primary">Save category</button>
+    <a href="{% url 'dashboard:categories' %}" class="btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

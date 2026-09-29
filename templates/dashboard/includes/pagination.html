@@ -1,0 +1,17 @@
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+<nav class="dash-pagination" aria-label="Table pagination">
+  {% if page_obj.has_previous %}
+  <a class="btn-ghost btn-sm" href="?{{ querystring }}{{ page_param|default:'page' }}={{ page_obj.previous_page_number }}">Previous</a>
+  {% endif %}
+  <span class="dash-pagination-meta">
+    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    · {{ page_obj.paginator.count }} total
+    · {{ page_obj.paginator.per_page }} per page
+  </span>
+  {% if page_obj.has_next %}
+  <a class="btn-ghost btn-sm" href="?{{ querystring }}{{ page_param|default:'page' }}={{ page_obj.next_page_number }}">Next</a>
+  {% endif %}
+</nav>
+{% elif page_obj %}
+<p class="dash-pagination-meta mt-3">Showing {{ page_obj.paginator.count }} row{{ page_obj.paginator.count|pluralize }}</p>
+{% endif %}

@@ -1,0 +1,10 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Site settings{% endblock %}
+{% block eyebrow %}Content{% endblock %}
+{% block heading %}Site settings{% endblock %}
+{% block content %}
+<form method="post" class="dash-form panel grid max-w-3xl gap-4 p-5 md:grid-cols-2">{% csrf_token %}
+  {% for field in form %}<div class="{% if field.name in 'announcement,address' %}md:col-span-2{% endif %}"><label>{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
+  <div class="md:col-span-2 flex gap-3"><button class="btn-primary">Save settings</button><a href="{% url 'dashboard:content' %}" class="btn-secondary">Cancel</a></div>
+</form>
+{% endblock %}

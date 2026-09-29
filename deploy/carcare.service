@@ -1,0 +1,35 @@
+[Unit]
+Description=Carcare Django application
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=carcare
+Group=www-data
+WorkingDirectory=/srv/carcare/current
+EnvironmentFile=/etc/carcare/carcare.env
+RuntimeDirectory=carcare
+RuntimeDirectoryMode=0750
+UMask=0007
+ExecStart=/srv/carcare/venv/bin/gunicorn \
+    --workers 2 \
+    --bind unix:/run/carcare/gunicorn.sock \
+    --access-logfile - \
+    --error-logfile - \
+    --capture-output \
+    --timeout 30 \
+    config.wsgi:application
+ExecReload=/bin/kill -s HUP $MAINPID
+KillSignal=SIGQUIT
+TimeoutStopSec=30
+Restart=on-failure
+RestartSec=5
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/srv/carcare/current/media
+
+[Install]
+WantedBy=multi-user.target

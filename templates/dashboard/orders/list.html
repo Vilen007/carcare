@@ -1,0 +1,78 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Orders{% endblock %}
+{% block eyebrow %}Commerce{% endblock %}
+{% block heading %}Orders{% endblock %}
+{% block content %}
+
+<div class="dash-toolbar">
+  <form method="get" class="dash-toolbar-filters">
+    <input type="search" name="q" value="{{ query }}" placeholder="Search order, name, phone…">
+    <select name="status">
+      <option value="">All statuses</option>
+      {% for value,label in status_choices %}
+      <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn-secondary btn-sm">Filter</button>
+    {% if query or status %}<a href="{% url 'dashboard:orders' %}" class="btn-ghost btn-sm">Clear</a>{% endif %}
+  </form>
+  <div class="dash-toolbar-actions">
+    <a href="{% url 'dashboard:orders_export' %}" class="btn-secondary btn-sm">Export CSV</a>
+  </div>
+</div>
+
+<div class="chip-row mb-4">
+  <a class="chip {% if not status %}is-active{% endif %}" href="{% url 'dashboard:orders' %}">All</a>
+  {% for value,label in status_choices %}
+  <a class="chip {% if status == value %}is-active{% endif %}" href="?status={{ value }}{% if query %}&q={{ query }}{% endif %}">{{ label }}</a>
+  {% endfor %}
+</div>
+
+<form method="post" action="{% url 'dashboard:orders_confirm' %}">{% csrf_token %}
+  <div class="page-card">
+    <div class="toolbar-bar">
+      <p class="text-sm text-zinc-400">Select pending orders, then confirm to send tracking email.</p>
+      <button type="submit" class="btn-primary btn-sm">Confirm selected</button>
+    </div>
+    <div class="dash-table-wrap">
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th style="width:2.5rem"><input type="checkbox" data-select-all title="Select all pending"></th>
+            <th>Order</th>
+            <th>Customer</th>
+            <th>City</th>
+            <th>Status</th>
+            <th>Total</th>
+            <th>Date</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in page_obj %}
+          <tr>
+            <td>{% if order.status == 'pending' %}<input type="checkbox" name="order_ids" value="{{ order.pk }}" data-order-check>{% endif %}</td>
+            <td><a class="font-medium text-champagne hover:underline" href="{% url 'dashboard:order_detail' order.number %}">{{ order.number }}</a></td>
+            <td>
+              <div>{{ order.full_name }}</div>
+              <div class="text-xs text-zinc-500">{{ order.phone }}</div>
+            </td>
+            <td>{{ order.city }}</td>
+            <td><span class="status-pill is-{{ order.status }}">{{ order.get_status_display }}</span></td>
+            <td class="tabular-nums">PKR {{ order.total|floatformat:0 }}</td>
+            <td class="whitespace-nowrap text-zinc-400">{{ order.created_at|date:"d M Y H:i" }}</td>
+            <td class="text-right whitespace-nowrap">
+              <a class="text-xs text-champagne hover:underline" href="{% url 'dashboard:order_detail' order.number %}">Open</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8" class="px-4 py-10 text-center text-zinc-500">No orders match this filter.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</form>
+
+{% include "dashboard/includes/pagination.html" with page_obj=page_obj querystring=querystring %}
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Content{% endblock %}
+{% block eyebrow %}Storefront{% endblock %}
+{% block heading %}Content{% endblock %}
+{% block content %}
+<div class="grid gap-8">
+  <section class="panel p-5">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <h2 class="text-xl">Site settings</h2>
+      <a href="{% url 'dashboard:site_settings' %}" class="btn-secondary btn-sm">Edit settings</a>
+    </div>
+    <dl class="grid gap-3 text-sm sm:grid-cols-2">
+      <div><dt class="text-zinc-500">Store</dt><dd>{{ settings_obj.store_name|default:"—" }}</dd></div>
+      <div><dt class="text-zinc-500">Support email</dt><dd>{{ settings_obj.support_email|default:"—" }}</dd></div>
+      <div><dt class="text-zinc-500">Support phone</dt><dd>{{ settings_obj.support_phone|default:"—" }}</dd></div>
+      <div class="sm:col-span-2"><dt class="text-zinc-500">Announcement</dt><dd>{{ settings_obj.announcement|default:"—" }}</dd></div>
+    </dl>
+  </section>
+
+  <section>
+    <div class="dash-toolbar mb-4">
+      <h2 class="text-xl">Hero slides</h2>
+      <a href="{% url 'dashboard:hero_new' %}" class="btn-primary btn-sm">Add slide</a>
+    </div>
+    <div class="space-y-3">
+      {% for slide in heroes %}
+      <article class="panel flex items-center justify-between gap-4 p-4">
+        <div>
+          <p class="eyebrow">Order {{ slide.sort_order }}{% if slide.is_active %} · Active{% endif %}</p>
+          <h3 class="mt-1 text-lg"><a class="hover:text-champagne" href="{% url 'dashboard:hero_edit' slide.pk %}">{{ slide.title }}</a></h3>
+        </div>
+        <form method="post" action="{% url 'dashboard:hero_delete' slide.pk %}">{% csrf_token %}
+          <button class="text-xs text-red-300 hover:underline">Delete</button>
+        </form>
+      </article>
+      {% empty %}<p class="text-zinc-500">No hero slides.</p>{% endfor %}
+    </div>
+  </section>
+
+  <section>
+    <div class="dash-toolbar mb-4">
+      <h2 class="text-xl">CMS pages</h2>
+      <a href="{% url 'dashboard:page_new' %}" class="btn-primary btn-sm">Add page</a>
+    </div>
+    <div class="space-y-3">
+      {% for page in pages %}
+      <article class="panel flex items-center justify-between gap-4 p-4">
+        <div>
+          <p class="eyebrow">/{{ page.slug }}/{% if page.is_published %} · Published{% endif %}</p>
+          <h3 class="mt-1 text-lg"><a class="hover:text-champagne" href="{% url 'dashboard:page_edit' page.pk %}">{{ page.title }}</a></h3>
+        </div>
+        <form method="post" action="{% url 'dashboard:page_delete' page.pk %}">{% csrf_token %}
+          <button class="text-xs text-red-300 hover:underline">Delete</button>
+        </form>
+      </article>
+      {% empty %}<p class="text-zinc-500">No pages.</p>{% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Sale campaign{% endblock %}
+{% block eyebrow %}Promotions{% endblock %}
+{% block heading %}{% if campaign %}{{ campaign.name }}{% else %}New sale{% endif %}{% endblock %}
+{% block content %}
+<form method="post" class="dash-form panel grid max-w-3xl gap-4 p-5 md:grid-cols-2">{% csrf_token %}
+  {% for field in form %}<div class="{% if field.name in 'categories,banner_text,applies_to_all' %}md:col-span-2{% endif %}"><label>{{ field.label }}</label>{{ field }}{% if field.help_text %}<p class="helptext">{{ field.help_text }}</p>{% endif %}{{ field.errors }}</div>{% endfor %}
+  <div class="md:col-span-2 flex gap-3"><button class="btn-primary">Save</button><a href="{% url 'dashboard:promotions' %}" class="btn-secondary">Cancel</a></div>
+</form>
+{% endblock %}

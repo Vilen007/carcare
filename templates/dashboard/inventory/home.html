@@ -1,0 +1,101 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Inventory{% endblock %}
+{% block eyebrow %}Stock{% endblock %}
+{% block heading %}Inventory{% endblock %}
+{% block content %}
+<div class="dash-toolbar">
+  <p class="text-sm text-zinc-400">Adjust stock with a ledger entry. Low-stock items appear on the left.</p>
+  <div class="dash-toolbar-actions">
+    <a href="{% url 'dashboard:inventory_export' %}" class="btn-secondary btn-sm">Export CSV</a>
+  </div>
+</div>
+
+<div class="grid gap-6 xl:grid-cols-[1.1fr_.9fr]">
+  <section class="page-card overflow-hidden">
+    <div class="border-b border-line px-5 py-4"><h2 class="text-xl">Low stock</h2></div>
+    <div class="dash-table-wrap">
+      <table class="dash-table">
+        <thead><tr><th>SKU</th><th>Product</th><th>Stock</th><th>Threshold</th><th></th></tr></thead>
+        <tbody>
+          {% for product in low_stock %}
+          <tr>
+            <td class="text-zinc-400">{{ product.sku }}</td>
+            <td><a class="text-champagne hover:underline" href="{% url 'dashboard:product_edit' product.pk %}">{{ product.name }}</a></td>
+            <td class="text-red-300 tabular-nums">{{ product.stock }}</td>
+            <td class="tabular-nums">{{ product.low_stock_threshold }}</td>
+            <td class="text-right">
+              <a class="text-xs text-champagne hover:underline" href="{% url 'dashboard:inventory' %}?product={{ product.pk }}#adjust">Adjust</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="py-8 text-center text-zinc-500">No low-stock items.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "dashboard/includes/pagination.html" with page_obj=low_stock page_param="low_page" querystring="" %}
+  </section>
+
+  <section class="panel p-5" id="adjust">
+    <h2 class="text-xl">Adjust stock</h2>
+    <p class="mt-2 text-sm text-zinc-400">
+      Enter how many units. <strong class="text-zinc-200">Purchase</strong> = you restocked from a supplier (stock up).
+      <strong class="text-zinc-200">Return</strong> = a customer sent an item back (stock up).
+      <strong class="text-zinc-200">Damage</strong> = unsellable / write-off (stock down).
+      Sales at checkout remove stock automatically.
+    </p>
+    <form method="post" action="{% url 'dashboard:inventory_adjust' %}" class="dash-form mt-5 space-y-4" id="inventory-adjust-form">{% csrf_token %}
+      {% for field in form %}
+      <div data-field="{{ field.name }}">
+        <label>{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<p class="helptext">{{ field.help_text }}</p>{% endif %}
+        {{ field.errors }}
+      </div>
+      {% endfor %}
+      <button class="btn-primary btn-sm w-full">Record adjustment</button>
+    </form>
+  </section>
+</div>
+
+<section class="page-card mt-6 overflow-hidden">
+  <div class="border-b border-line px-5 py-4"><h2 class="text-xl">Recent movements</h2></div>
+  <div class="dash-table-wrap">
+    <table class="dash-table">
+      <thead><tr><th>When</th><th>Product</th><th>Change</th><th>Reason</th><th>By</th></tr></thead>
+      <tbody>
+        {% for row in history %}
+        <tr>
+          <td class="whitespace-nowrap text-zinc-400">{{ row.created_at|date:"d M Y H:i" }}</td>
+          <td>{{ row.product.name }}</td>
+          <td class="tabular-nums {% if row.quantity > 0 %}text-emerald-300{% else %}text-red-300{% endif %}">
+            {% if row.quantity > 0 %}+{% endif %}{{ row.quantity }}
+          </td>
+          <td>{{ row.get_reason_display }}</td>
+          <td class="text-zinc-400">{{ row.created_by|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="py-8 text-center text-zinc-500">No adjustments yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "dashboard/includes/pagination.html" with page_obj=history page_param="hist_page" querystring="" %}
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+(function () {
+  const form = document.getElementById('inventory-adjust-form');
+  if (!form) return;
+  const reason = form.querySelector('[name="reason"]');
+  const directionWrap = form.querySelector('[data-field="direction"]');
+  function sync() {
+    if (!directionWrap || !reason) return;
+    directionWrap.style.display = reason.value === 'correction' ? '' : 'none';
+  }
+  reason?.addEventListener('change', sync);
+  sync();
+})();
+</script>
+{% endblock %}

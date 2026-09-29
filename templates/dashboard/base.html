@@ -1,0 +1,460 @@
+{% load static %}
+<!doctype html>
+<html lang="en" class="bg-ink" style="color-scheme: dark;">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Ops{% endblock %} · Carcare Dashboard</title>
+  <link rel="stylesheet" href="{% static 'dist/app.css' %}">
+  <style>
+    /* Dashboard shell — sidebar + main (never stack nav above content) */
+    .dash-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .dash-main {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+    }
+    .dash-mobile-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .75rem;
+      padding: .75rem 1rem;
+      border-bottom: 1px solid #252c33;
+      background: #101419;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+    .dash-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: rgba(0,0,0,.55);
+    }
+    .dash-backdrop.is-open { display: block; }
+    .dash-aside {
+      display: flex;
+      flex-direction: column;
+      background: #101419;
+      border-right: 1px solid #252c33;
+      z-index: 50;
+      overflow: hidden;
+      min-height: 0;
+    }
+    #dash-nav {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      scrollbar-gutter: auto;
+    }
+    /* Dark scrollbars — sidebar + table panes (no default Windows chrome) */
+    .dash-scroll,
+    #dash-nav,
+    .dash-table-wrap,
+    .page-card.overflow-x-auto,
+    .overflow-x-auto {
+      scrollbar-width: thin;
+      scrollbar-color: #52525b #151a20;
+    }
+    .dash-scroll::-webkit-scrollbar,
+    #dash-nav::-webkit-scrollbar,
+    .dash-table-wrap::-webkit-scrollbar,
+    .page-card.overflow-x-auto::-webkit-scrollbar,
+    .overflow-x-auto::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    .dash-scroll::-webkit-scrollbar-track,
+    #dash-nav::-webkit-scrollbar-track,
+    .dash-table-wrap::-webkit-scrollbar-track,
+    .page-card.overflow-x-auto::-webkit-scrollbar-track,
+    .overflow-x-auto::-webkit-scrollbar-track {
+      background: #151a20;
+      border-radius: 999px;
+    }
+    .dash-scroll::-webkit-scrollbar-thumb,
+    #dash-nav::-webkit-scrollbar-thumb,
+    .dash-table-wrap::-webkit-scrollbar-thumb,
+    .page-card.overflow-x-auto::-webkit-scrollbar-thumb,
+    .overflow-x-auto::-webkit-scrollbar-thumb {
+      background: #52525b;
+      border-radius: 999px;
+      border: 2px solid #151a20;
+    }
+    .dash-scroll::-webkit-scrollbar-thumb:hover,
+    #dash-nav::-webkit-scrollbar-thumb:hover,
+    .dash-table-wrap::-webkit-scrollbar-thumb:hover,
+    .page-card.overflow-x-auto::-webkit-scrollbar-thumb:hover,
+    .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+      background: #71717a;
+    }
+    .dash-scroll::-webkit-scrollbar-button,
+    #dash-nav::-webkit-scrollbar-button,
+    .dash-table-wrap::-webkit-scrollbar-button,
+    .page-card.overflow-x-auto::-webkit-scrollbar-button,
+    .overflow-x-auto::-webkit-scrollbar-button {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+    @media (min-width: 900px) {
+      #dash-nav::-webkit-scrollbar-thumb {
+        background: #3f3f46;
+      }
+      #dash-nav:hover::-webkit-scrollbar-thumb {
+        background: #52525b;
+      }
+    }
+    /* Fixed-height table panes used across the ops dashboard */
+    .dash-table-wrap {
+      max-height: 32rem;
+      overflow: auto;
+      overscroll-behavior: contain;
+      border-top: 1px solid #252c33;
+    }
+    .dash-table-wrap--sm { max-height: 18rem; }
+    .dash-table-wrap .dash-table { min-width: 640px; }
+    .dash-table-wrap thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #0d1116;
+      box-shadow: inset 0 -1px 0 #252c33;
+    }
+    .dash-pagination {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: .5rem;
+      margin-top: .85rem;
+    }
+    .dash-pagination-meta {
+      font-size: .75rem;
+      color: #71717a;
+    }
+    /* Mobile: drawer off-screen; main content starts at top */
+    @media (max-width: 899px) {
+      .dash-aside {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: min(280px, 88vw);
+        transform: translateX(-105%);
+        transition: transform .2s ease;
+        box-shadow: 8px 0 32px rgba(0,0,0,.45);
+      }
+      .dash-aside.is-open { transform: translateX(0); }
+      .dash-aside-header { display: none; }
+      .dash-mobile-bar { display: flex; }
+    }
+    /* Desktop: fixed column; nav scrolls inside sidebar only */
+    @media (min-width: 900px) {
+      .dash-shell {
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+      }
+      .dash-aside {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        max-height: 100vh;
+      }
+      .dash-mobile-bar { display: none; }
+      .dash-backdrop { display: none !important; }
+    }
+    .dash-nav-link {
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      padding: .45rem .75rem;
+      border-radius: .35rem;
+      font-size: .8125rem;
+      color: #a1a1aa;
+      text-decoration: none;
+    }
+    .dash-nav-link:hover { color: #f4f4f5; background: rgba(255,255,255,.03); }
+    .dash-nav-link.active {
+      color: #d4b06a;
+      background: rgba(212,176,106,.08);
+    }
+    .dash-nav-section {
+      margin: .5rem .75rem .2rem;
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: #52525b;
+    }
+    .dash-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: .75rem;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .dash-toolbar-filters {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: .5rem;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .dash-toolbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: .5rem;
+    }
+    /* Critical: toolbar controls must NOT be 100% width */
+    .dash-toolbar input:not([type="checkbox"]):not([type="radio"]),
+    .dash-toolbar select,
+    .dash-inline-filters input:not([type="checkbox"]):not([type="radio"]),
+    .dash-inline-filters select {
+      width: auto !important;
+      min-width: 0;
+      max-width: 100%;
+      padding: .55rem .75rem !important;
+      font-size: .8125rem !important;
+    }
+    .dash-toolbar input[type="search"],
+    .dash-inline-filters input[type="search"] {
+      width: 16rem !important;
+      max-width: 100%;
+    }
+    .dash-toolbar select,
+    .dash-inline-filters select {
+      width: 11rem !important;
+    }
+    .btn-sm {
+      padding: .55rem .9rem !important;
+      font-size: .65rem !important;
+      letter-spacing: .14em !important;
+      white-space: nowrap;
+    }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #252c33;
+      padding: .55rem .9rem;
+      font-size: .65rem;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: #a1a1aa;
+      background: transparent;
+    }
+    .btn-ghost:hover { border-color: #d4b06a; color: #d4b06a; }
+    .dash-table { width: 100%; border-collapse: collapse; }
+    .dash-table th, .dash-table td {
+      border-bottom: 1px solid #252c33;
+      padding: .9rem 1rem;
+      text-align: left;
+      font-size: .875rem;
+      vertical-align: middle;
+    }
+    .dash-table th {
+      color: #71717a;
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      background: rgba(0,0,0,.25);
+    }
+    .dash-table tbody tr:hover { background: rgba(255,255,255,.02); }
+    .dash-table input[type="checkbox"] { width: auto !important; }
+    .dash-form input:not([type="checkbox"]):not([type="radio"]),
+    .dash-form select,
+    .dash-form textarea {
+      width: 100%;
+      border: 1px solid #252c33;
+      background: #0b0f13;
+      color: #f4f1ea;
+      padding: .65rem .75rem;
+      border-radius: .35rem;
+      font-size: .875rem;
+    }
+    .dash-form label {
+      display: block;
+      margin-bottom: .35rem;
+      font-size: .65rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: #a1a1aa;
+    }
+    .dash-form .helptext { color: #71717a; font-size: .75rem; margin-top: .25rem; }
+    .dash-form .errorlist { color: #fca5a5; font-size: .8rem; margin: .25rem 0; list-style: none; padding: 0; }
+    .dash-form input[type="checkbox"] { width: auto; }
+    .status-pill {
+      display: inline-block;
+      border: 1px solid #252c33;
+      padding: .2rem .55rem;
+      font-size: .65rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: #d4d4d8;
+      white-space: nowrap;
+    }
+    .status-pill.is-pending { border-color: #854d0e; color: #fde68a; }
+    .status-pill.is-confirmed, .status-pill.is-packing { border-color: #1e3a5f; color: #93c5fd; }
+    .status-pill.is-shipped { border-color: #164e63; color: #67e8f9; }
+    .status-pill.is-delivered { border-color: #14532d; color: #86efac; }
+    .status-pill.is-cancelled, .status-pill.is-returned { border-color: #7f1d1d; color: #fca5a5; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid #252c33;
+      padding: .35rem .7rem;
+      font-size: .7rem;
+      color: #a1a1aa;
+      text-decoration: none;
+      border-radius: .25rem;
+    }
+    .chip:hover, .chip.is-active { border-color: #d4b06a; color: #d4b06a; }
+    .stepper { display: flex; flex-wrap: wrap; gap: .35rem; }
+    .stepper-step {
+      flex: 1 1 0;
+      min-width: 5.5rem;
+      text-align: center;
+      border: 1px solid #252c33;
+      padding: .55rem .4rem;
+      font-size: .65rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #71717a;
+      background: transparent;
+      cursor: pointer;
+    }
+    .stepper-step.is-done { border-color: #3f3f46; color: #d4d4d8; }
+    .stepper-step.is-current { border-color: #d4b06a; color: #d4b06a; background: rgba(212,176,106,.08); }
+    .stepper-step:disabled { cursor: default; opacity: .55; }
+    .page-card { border: 1px solid #252c33; background: #101419; overflow: hidden; }
+    .toolbar-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: .75rem;
+      padding: .85rem 1rem;
+      border-bottom: 1px solid #252c33;
+      background: rgba(0,0,0,.2);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-ink text-zinc-100">
+  <div class="dash-backdrop" data-dash-backdrop hidden></div>
+  <div class="dash-shell">
+    <aside class="dash-aside" id="dash-aside" aria-label="Sidebar">
+      <div class="dash-aside-header flex shrink-0 items-center justify-between px-4 py-3">
+        <a href="{% url 'dashboard:overview' %}" class="font-display text-xl font-bold tracking-tight">
+          CAR<span class="text-champagne">CARE</span>
+          <span class="ml-1 align-middle font-sans text-[10px] font-bold uppercase tracking-[.2em] text-zinc-500">Ops</span>
+        </a>
+      </div>
+      <div class="flex items-center justify-between border-b border-line px-3 py-2 md:hidden">
+        <span class="text-xs font-bold uppercase tracking-widest text-zinc-500">Navigation</span>
+        <button type="button" class="btn-ghost btn-sm" data-dash-nav-toggle aria-label="Close menu">Close</button>
+      </div>
+      <nav id="dash-nav" class="dash-scroll px-2 pb-2" aria-label="Dashboard">
+        {% with path=request.path %}
+        <p class="dash-nav-section">Ops</p>
+        <a class="dash-nav-link {% if path == '/dashboard/' %}active{% endif %}" href="{% url 'dashboard:overview' %}">Overview</a>
+        <a class="dash-nav-link {% if '/dashboard/orders' in path %}active{% endif %}" href="{% url 'dashboard:orders' %}">Orders</a>
+        <a class="dash-nav-link {% if '/dashboard/inbox' in path %}active{% endif %}" href="{% url 'dashboard:inbox' %}">Inbox</a>
+        <a class="dash-nav-link {% if '/dashboard/reviews' in path %}active{% endif %}" href="{% url 'dashboard:reviews' %}">Reviews</a>
+
+        <p class="dash-nav-section">Catalog</p>
+        <a class="dash-nav-link {% if '/dashboard/products' in path %}active{% endif %}" href="{% url 'dashboard:products' %}">Products</a>
+        <a class="dash-nav-link {% if '/dashboard/categories' in path %}active{% endif %}" href="{% url 'dashboard:categories' %}">Categories</a>
+        <a class="dash-nav-link {% if '/dashboard/inventory' in path %}active{% endif %}" href="{% url 'dashboard:inventory' %}">Inventory</a>
+        <a class="dash-nav-link {% if '/dashboard/bundles' in path %}active{% endif %}" href="{% url 'dashboard:bundles' %}">Bundles</a>
+
+        <p class="dash-nav-section">Growth</p>
+        <a class="dash-nav-link {% if '/dashboard/promotions' in path %}active{% endif %}" href="{% url 'dashboard:promotions' %}">Promotions</a>
+        <a class="dash-nav-link {% if '/dashboard/shipping' in path %}active{% endif %}" href="{% url 'dashboard:shipping' %}">Shipping</a>
+        <a class="dash-nav-link {% if '/dashboard/customers' in path %}active{% endif %}" href="{% url 'dashboard:customers' %}">Customers</a>
+
+        <p class="dash-nav-section">Store</p>
+        <a class="dash-nav-link {% if '/dashboard/content' in path %}active{% endif %}" href="{% url 'dashboard:content' %}">Content</a>
+        <a class="dash-nav-link text-zinc-500" href="/admin/" target="_blank" rel="noopener">Advanced admin</a>
+        <a class="dash-nav-link text-zinc-500" href="{% url 'core:home' %}" target="_blank" rel="noopener">View storefront</a>
+        {% endwith %}
+      </nav>
+      <form method="post" action="{% url 'dashboard:logout' %}" class="mt-auto shrink-0 border-t border-line p-3">{% csrf_token %}
+        <button class="btn-ghost w-full btn-sm">Sign out</button>
+      </form>
+    </aside>
+
+    <div class="dash-main">
+      <div class="dash-mobile-bar">
+        <a href="{% url 'dashboard:overview' %}" class="font-display text-lg font-bold tracking-tight">
+          CAR<span class="text-champagne">CARE</span> <span class="font-sans text-[10px] font-bold uppercase tracking-widest text-zinc-500">Ops</span>
+        </a>
+        <button type="button" class="btn-ghost btn-sm" data-dash-nav-toggle aria-expanded="false" aria-controls="dash-aside">Menu</button>
+      </div>
+      <header class="flex items-end justify-between gap-4 border-b border-line px-5 py-5 md:px-8">
+        <div class="min-w-0">
+          <p class="eyebrow">{% block eyebrow %}Operations{% endblock %}</p>
+          <h1 class="mt-1 truncate text-3xl md:text-[2.35rem]">{% block heading %}Dashboard{% endblock %}</h1>
+        </div>
+        <div class="shrink-0 text-right text-xs text-zinc-500">
+          <p class="truncate max-w-[10rem]">{{ request.user.get_full_name|default:request.user.username }}</p>
+          <p class="mt-0.5 text-champagne">Staff</p>
+        </div>
+      </header>
+      {% if messages %}
+      <div class="space-y-2 px-5 pt-4 md:px-8" aria-live="polite">
+        {% for message in messages %}
+        <div class="border px-4 py-3 text-sm {% if message.tags == 'error' %}border-red-800 text-red-200{% elif message.tags == 'success' %}border-emerald-800 text-emerald-100{% else %}border-line text-zinc-200{% endif %}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <main class="px-5 py-6 md:px-8 md:py-7">{% block content %}{% endblock %}</main>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const aside = document.getElementById('dash-aside');
+      const backdrop = document.querySelector('[data-dash-backdrop]');
+      const toggles = document.querySelectorAll('[data-dash-nav-toggle]');
+      const mq = window.matchMedia('(min-width: 900px)');
+
+      function setNavOpen(open) {
+        aside?.classList.toggle('is-open', open);
+        backdrop?.classList.toggle('is-open', open);
+        if (backdrop) backdrop.hidden = !open;
+        toggles.forEach((btn) => btn.setAttribute('aria-expanded', open ? 'true' : 'false'));
+        document.body.style.overflow = open && !mq.matches ? 'hidden' : '';
+      }
+
+      function closeNav() { setNavOpen(false); }
+
+      toggles.forEach((btn) => btn.addEventListener('click', () => {
+        setNavOpen(!aside?.classList.contains('is-open'));
+      }));
+      backdrop?.addEventListener('click', closeNav);
+      aside?.querySelectorAll('a.dash-nav-link').forEach((link) => {
+        link.addEventListener('click', () => { if (!mq.matches) closeNav(); });
+      });
+      mq.addEventListener('change', () => closeNav());
+
+      document.querySelector('[data-select-all]')?.addEventListener('change', (e) => {
+        document.querySelectorAll('[data-order-check]').forEach((el) => { el.checked = e.target.checked; });
+      });
+    })();
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

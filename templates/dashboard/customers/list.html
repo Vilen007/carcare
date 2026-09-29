@@ -1,0 +1,37 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Customers{% endblock %}
+{% block eyebrow %}CRM{% endblock %}
+{% block heading %}Customer addresses{% endblock %}
+{% block content %}
+<div class="dash-toolbar">
+  <form method="get" class="dash-toolbar-filters">
+    <input type="search" name="q" value="{{ query }}" placeholder="Search name or phone">
+    <button type="submit" class="btn-secondary btn-sm">Search</button>
+  </form>
+  <div class="dash-toolbar-actions">
+    <a class="btn-ghost btn-sm" href="/admin/auth/user/" target="_blank" rel="noopener">User accounts</a>
+  </div>
+</div>
+<p class="mb-4 text-sm text-zinc-500">Addresses saved at checkout. Manage login accounts under Advanced → Users.</p>
+<div class="page-card">
+  <div class="dash-table-wrap">
+    <table class="dash-table">
+      <thead><tr><th>Name</th><th>Phone</th><th>City</th><th>Province</th><th>User</th></tr></thead>
+      <tbody>
+        {% for address in page_obj %}
+        <tr>
+          <td>{{ address.full_name }}</td>
+          <td>{{ address.phone }}</td>
+          <td>{{ address.city }}</td>
+          <td>{{ address.province }}</td>
+          <td class="text-zinc-400">{{ address.user.email|default:address.user.username }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="py-8 text-center text-zinc-500">No addresses found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "dashboard/includes/pagination.html" with page_obj=page_obj querystring=querystring %}
+{% endblock %}

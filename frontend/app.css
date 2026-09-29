@@ -1,0 +1,51 @@
+@import "tailwindcss";
+@source "../templates";
+@source "../apps";
+
+@theme {
+  --color-ink: #080a0c;
+  --color-panel: #101419;
+  --color-line: #252c33;
+  --color-silver: #b9c2ca;
+  --color-champagne: #d4b06a;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", Georgia, serif;
+}
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body { @apply bg-ink text-zinc-100 font-sans antialiased; }
+  h1, h2, h3 { @apply font-display tracking-tight; }
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea {
+    @apply w-full rounded-sm border border-line bg-panel px-4 py-3 text-sm text-white outline-none transition focus:border-champagne;
+  }
+  label { @apply mb-2 block text-xs font-bold uppercase tracking-[.16em] text-zinc-400; }
+  a, button { @apply transition; }
+}
+
+@layer components {
+  .container-shell { @apply mx-auto w-full max-w-[1440px] px-5 md:px-8 lg:px-12; }
+  .eyebrow { @apply text-[11px] font-bold uppercase tracking-[.28em] text-champagne; }
+  .display-title { @apply text-4xl leading-[.95] md:text-6xl lg:text-7xl; }
+  .section-title { @apply text-3xl md:text-5xl; }
+  .btn-primary { @apply inline-flex items-center justify-center bg-champagne px-6 py-3 text-xs font-extrabold uppercase tracking-[.18em] text-black hover:bg-[#ebca86]; }
+  .btn-secondary { @apply inline-flex items-center justify-center border border-zinc-600 px-6 py-3 text-xs font-extrabold uppercase tracking-[.18em] text-white hover:border-champagne hover:text-champagne; }
+  .panel { @apply border border-line bg-panel; }
+  .product-card { @apply relative border border-line bg-panel transition duration-300 hover:-translate-y-1 hover:border-zinc-600; }
+  .product-media { @apply relative aspect-square overflow-hidden bg-[#151a20]; }
+  .product-media img { @apply h-full w-full object-cover transition duration-700 group-hover:scale-105; }
+  .badge { @apply absolute left-3 top-3 z-10 bg-champagne px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-black; }
+  .price { @apply font-bold tabular-nums text-white; }
+  .muted { @apply text-zinc-400; }
+  .prose-store h2 { @apply mt-8 text-3xl; }
+  .prose-store p { @apply mt-4 leading-7 text-zinc-300; }
+  .errorlist { @apply mb-2 list-none text-sm text-red-400; }
+  .helptext { @apply mt-1 block text-xs text-zinc-500; }
+  .scrollbar-hidden { scrollbar-width: none; -ms-overflow-style: none; }
+  .scrollbar-hidden::-webkit-scrollbar { display: none; }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; color: black; }
+}
