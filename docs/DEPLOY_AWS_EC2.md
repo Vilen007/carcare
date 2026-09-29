@@ -42,7 +42,7 @@ git status
 git add .
 git commit -m "Prepare for EC2 deploy"
 # create a GitHub repo, then:
-git remote add origin https://github.com/YOUR_USER/carcare.git
+git remote add origin https://github.com/Vilen007/carcare.git
 git push -u origin main
 ```
 
@@ -134,7 +134,7 @@ Replace with your repo URL:
 
 ```bash
 cd /tmp
-git clone https://github.com/YOUR_USER/carcare.git carcare-src
+git clone https://github.com/Vilen007/carcare.git carcare-src
 sudo rsync -a --delete \
   --exclude .git --exclude .venv --exclude node_modules \
   --exclude db.sqlite3 --exclude media \
@@ -284,7 +284,7 @@ On the server:
 ```bash
 cd /tmp
 rm -rf carcare-src
-git clone https://github.com/YOUR_USER/carcare.git carcare-src
+git clone https://github.com/Vilen007/carcare.git carcare-src
 sudo rsync -a --delete \
   --exclude .git --exclude .venv --exclude node_modules \
   --exclude db.sqlite3 --exclude media --exclude staticfiles \
