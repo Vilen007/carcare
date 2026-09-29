@@ -330,7 +330,7 @@ Full TLS/Cloudflare notes are also in the main `README.md`.
 | 502 Bad Gateway | `sudo journalctl -u carcare -n 100 --no-pager` |
 | DisallowedHost | `DJANGO_ALLOWED_HOSTS` must include the IP/domain you type in the browser |
 | CSRF failed on login | `CSRF_TRUSTED_ORIGINS` must match scheme + host (`http://IP` for HTTP) |
-| Slow / killed installs | Confirm swap: `free -h` |
+| Login / add-to-cart / checkout “does nothing” on HTTP | Ensure `SECURE_SSL_REDIRECT=false` in `carcare.env`, then restart `carcare`. Secure cookies must not be forced over plain HTTP. |
 | Static CSS missing | Rebuild `npm run css:build` on PC, push `static/dist/app.css`, redeploy + `collectstatic` |
 | DB auth errors | Password in `/etc/carcare/carcare.env` must match Postgres user |
 
